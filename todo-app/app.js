@@ -33,6 +33,7 @@ const {createStore} = Redux;
 const {combineReducers} = Redux;
 const {Component} = React;
 
+
 const todoReducer = combineReducers(
  {
   todos: todos,
@@ -40,11 +41,14 @@ const todoReducer = combineReducers(
  }
 );
 
-const store = createStore(todoReducer);
+/* const store = createStore(todoReducer);
+ */
 
-
-const TodoInput = () => {
+const TodoInput = (props, context) => {
 let input;
+console.log('TEST   ', context);
+const {store} = context;
+
 	return (
 <div>
   <input ref={(node) => {
@@ -61,6 +65,10 @@ let input;
         </button>
  </div>
   )
+}
+
+TodoInput.contextTypes = {
+store: PropTypes.object
 }
 
 const Link = ({
@@ -84,7 +92,11 @@ return (
 
 class FilterLink extends Component {
 
+
+
 componentDidMount() {
+const {store} = this.context;
+console.log('Test', this.context)
 const subscriber = store.subscribe(() => {
  this.forceUpdate();
 })
@@ -96,6 +108,7 @@ componentWillUnmount() {
 
 render(){
   const {filter,children} = this.props;
+  const {store} = this.context;
   const state = store.getState();
 
   return (
@@ -112,6 +125,10 @@ render(){
   )
 }
 
+}
+
+FilterLink.contextTypes = {
+	store: PropTypes.object
 }
 
 const Footer = () => (
@@ -169,6 +186,7 @@ return (
 
 class VisibleTodoList extends Component {
  componentDidMount() {
+ 		const {store} = this.context;
     const subscriber = store.subscribe(() => {
      this.forceUpdate();
 })
@@ -178,7 +196,7 @@ componentWillUnmount() {
   subscriber.unsubscribe();
 }
  render() {
- 
+ const {store} = this.context;
  const state = store.getState()
  return (
  	
@@ -195,6 +213,10 @@ componentWillUnmount() {
  
  }
 
+}
+
+VisibleTodoList.contextTypes = {
+	store: PropTypes.object
 }
 
 const getVisibleTodos = (todos, filter) => {
@@ -218,16 +240,36 @@ const TodoApp = ({todos, visibiltyFilter}) => (
       <Footer />
     </div>
 );
-const render = ()=> {
-   ReactDOM.render(<TodoApp 
-                   {...store.getState()}
-                   />,
-                  document.getElementById('root'));
+ 
+class Provider extends Component {
+  getChildContext() {
+    return {
+      store: this.props.store
+    };
+  }
+  render(){
+    return this.props.children;
+  }
+}
+Provider.childContextTypes = {
+  store: PropTypes.object
+} 
+	
+ReactDOM.render(
+  <Provider store={createStore(todoReducer)}>
+    <TodoApp /> 
+  </Provider> 
+  ,
+  document.getElementById('root'));
+  
+  Provider.childContextTypes = {
+  store: PropTypes.object
 }
 
-store.subscribe(render);
-render();
-console.log(store.getState());
+
+/* store.subscribe(render); */
+/* render(); */
+/* console.log(store.getState()); */
 
 //TEST TEST TEST
 
