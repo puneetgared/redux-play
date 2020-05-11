@@ -32,6 +32,7 @@ const visibiltyFilter = (state='SHOW_ALL', action) => {
 const {createStore} = Redux;
 const {combineReducers} = Redux;
 const {Component} = React;
+const {connect} = ReactRedux;
 
 
 const todoReducer = combineReducers(
@@ -44,18 +45,15 @@ const todoReducer = combineReducers(
 /* const store = createStore(todoReducer);
  */
 
-const TodoInput = (props, context) => {
+let TodoInput = ({dispatch}) => {
 let input;
-console.log('TEST   ', context);
-const {store} = context;
-
 	return (
 <div>
   <input ref={(node) => {
       input = node;
     }}/>
      <button onClick={() =>{
-     	store.dispatch({type: 'ADD_TODO',
+     	dispatch({type: 'ADD_TODO',
                  id: todoCounter++,
                   name: input.value
                  })
@@ -67,9 +65,10 @@ const {store} = context;
   )
 }
 
-TodoInput.contextTypes = {
+TodoInput = connect()(TodoInput);
+/* TodoInput.contextTypes = {
 store: PropTypes.object
-}
+} */
 
 const Link = ({
 active,
@@ -90,7 +89,28 @@ return (
 );
 };
 
-class FilterLink extends Component {
+const mapStateToLinkProps = (state, ownProps) => {
+	return {
+  	active : ownProps.filter === state.visibiltyFilter
+  };
+}
+
+const mapDispatchToLinkProps = (dispatch, ownProps) => {
+	return {
+  	onClick: () => {
+    	dispatch({
+                   type: 'CHANGE_VISIBILITY',
+                   filter
+             });
+    }
+  };
+}
+
+const FilterLink = connect(mapStateToLinkProps,
+												mapDispatchToLinkProps)
+                        (Link);
+
+/* class FilterLink extends Component {
 
 
 
@@ -112,7 +132,7 @@ render(){
   const state = store.getState();
 
   return (
-		  <Link active={filter === state.visibiltyFilter}
+      <Link active={filter === state.visibiltyFilter}
             onClick={() => {
                 store.dispatch({
                    type: 'CHANGE_VISIBILITY',
@@ -128,8 +148,8 @@ render(){
 }
 
 FilterLink.contextTypes = {
-	store: PropTypes.object
-}
+  store: PropTypes.object
+} */
 
 const Footer = () => (
   <p>
@@ -184,9 +204,9 @@ return (
 );
 }
 
-class VisibleTodoList extends Component {
+/* class VisibleTodoList extends Component {
  componentDidMount() {
- 		const {store} = this.context;
+     const {store} = this.context;
     const subscriber = store.subscribe(() => {
      this.forceUpdate();
 })
@@ -199,11 +219,11 @@ componentWillUnmount() {
  const {store} = this.context;
  const state = store.getState()
  return (
- 	
+   
   <TodoList
   todos={getVisibleTodos(state.todos, state.visibiltyFilter)}
   onTodoClick={(id) => {
-  	store.dispatch({type: 'TOGGLE_TODO',
+    store.dispatch({type: 'TOGGLE_TODO',
                                id});
   }}
   >
@@ -213,11 +233,32 @@ componentWillUnmount() {
  
  }
 
-}
+} 
 
 VisibleTodoList.contextTypes = {
-	store: PropTypes.object
+  store: PropTypes.object
 }
+*/
+
+const mapStateToProps = (state) => {
+	return {
+  	todos: getVisibleTodos(state.todos,
+    											 state.visibiltyFilter)
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+	return {
+      onTodoClick : (id) => {
+      			dispatch({type: 'TOGGLE_TODO',
+                                 id})
+    }
+  };
+};
+
+const VisibleTodoList = connect(mapStateToProps,
+        mapDispatchToProps)(TodoList);
+       
 
 const getVisibleTodos = (todos, filter) => {
 switch(filter) {
@@ -241,7 +282,7 @@ const TodoApp = ({todos, visibiltyFilter}) => (
     </div>
 );
  
-class Provider extends Component {
+/* class Provider extends Component {
   getChildContext() {
     return {
       store: this.props.store
@@ -253,18 +294,19 @@ class Provider extends Component {
 }
 Provider.childContextTypes = {
   store: PropTypes.object
-} 
-	
+} */
+const {Provider} = ReactRedux;
+const store = createStore(todoReducer);
 ReactDOM.render(
-  <Provider store={createStore(todoReducer)}>
+  <Provider store={store}>
     <TodoApp /> 
   </Provider> 
   ,
   document.getElementById('root'));
   
-  Provider.childContextTypes = {
+ /*  Provider.childContextTypes = {
   store: PropTypes.object
-}
+  } */
 
 
 /* store.subscribe(render); */
